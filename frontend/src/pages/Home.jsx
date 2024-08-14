@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
 import api from "../api";
-import Note from "../components/Note"
-import "../styles/Home.css"
+import Note from "../components/Note";
+import "../styles/Home.css";
 
 function Home() {
     const [notes, setNotes] = useState([]);
     const [content, setContent] = useState("");
     const [title, setTitle] = useState("");
+    const [movieName, setMovieName] = useState("");
+    const [movieResults, setMovieResults] = useState(null);
 
     useEffect(() => {
         getNotes();
@@ -37,47 +39,81 @@ function Home() {
     const createNote = (e) => {
         e.preventDefault();
         api
-            .post("/api/notes/", { content, title })
+            .post("/api/notes/", { title, content })
             .then((res) => {
-                if (res.status === 201) alert("Note created!");
-                else alert("Failed to make note.");
-                getNotes();
+                if (res.status === 201) {
+                    alert("Note created!");
+                    setTitle("");
+                    setContent("");
+                    getNotes();
+                } else {
+                    alert("Failed to create note.");
+                }
             })
-            .catch((err) => alert(err));
+            .catch((error) => alert(error));
+    };
+
+    const searchMovie = (e) => {
+        e.preventDefault();
+        api
+            .post("/api/movie-search/", { movie_name: movieName })
+            .then((res) => {
+                setMovieResults(res.data);
+            })
+            .catch((error) => alert(error));
     };
 
     return (
-        <div>
-            <div>
-                <h2>Notes</h2>
-                {notes.map((note) => (
-                    <Note note={note} onDelete={deleteNote} key={note.id} />
-                ))}
-            </div>
-            <h2>Create a Note</h2>
+        <div className="home">
+            <h1>Notes</h1>
             <form onSubmit={createNote}>
-                <label htmlFor="title">Title:</label>
-                <br />
                 <input
                     type="text"
-                    id="title"
-                    name="title"
-                    required
-                    onChange={(e) => setTitle(e.target.value)}
                     value={title}
-                />
-                <label htmlFor="content">Content:</label>
-                <br />
-                <textarea
-                    id="content"
-                    name="content"
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Title"
                     required
+                />
+                <textarea
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                ></textarea>
-                <br />
-                <input type="submit" value="Submit"></input>
+                    placeholder="Content"
+                    required
+                />
+                <button type="submit">Create Note</button>
             </form>
+            <div className="notes">
+                {notes.map((note) => (
+                    <Note key={note.id} note={note} deleteNote={deleteNote} />
+                ))}
+            </div>
+            <h1>Movie Search</h1>
+            <form onSubmit={searchMovie}>
+                <input
+                    type="text"
+                    value={movieName}
+                    onChange={(e) => setMovieName(e.target.value)}
+                    placeholder="Enter movie name"
+                    required
+                />
+                <button type="submit">Search</button>
+            </form>
+            {movieResults && (
+             <div>
+             <h2>Search Results:</h2>
+             <div className="movie-results">
+                 {movieResults.results.map((movie) => (
+                     <div key={movie.id} className="movie">
+                         <img
+                             src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
+                             alt={movie.title}
+                         />
+                         <p>{movie.title}</p>
+                     </div>
+                 ))}
+             </div>
+         </div>
+     )}
         </div>
     );
 }
