@@ -5,6 +5,7 @@ import Register from './pages/Register'
 import Home from './pages/Home'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
+import Recommendations from './pages/Recommendations'
 
 function Logout() {
   localStorage.clear()
@@ -25,6 +26,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Home />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/recommendations/:movieId"
+          element={
+            <ProtectedRoute>
+              <Recommendations />
             </ProtectedRoute>
           }
         />
