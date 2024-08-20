@@ -1,33 +1,28 @@
-import { useState, useEffect } from "react";
-import api from "../api";
-import Note from "../components/Note";
-import "../styles/Home.css";
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api'; // Assuming you have an api.js file for axios instance
+import "../styles/Home.css"
 
 function Home() {
-    const [notes, setNotes] = useState([]);
-    const [content, setContent] = useState("");
-    const [title, setTitle] = useState("");
-    const [movieName, setMovieName] = useState("");
+    const [title, setTitle] = useState('');
+    const [content, setContent] = useState('');
+    const [movieName, setMovieName] = useState('');
     const [movieResults, setMovieResults] = useState(null);
+    const [notes, setNotes] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         getNotes();
     }, []);
 
     const getNotes = () => {
-        api
-            .get("/api/notes/")
-            .then((res) => res.data)
-            .then((data) => {
-                setNotes(data);
-                console.log(data);
-            })
-            .catch((err) => alert(err));
+        api.get('/api/notes/')
+            .then((res) => setNotes(res.data))
+            .catch((error) => alert(error));
     };
 
     const deleteNote = (id) => {
-        api
-            .delete(`/api/notes/delete/${id}/`)
+        api.delete(`/api/notes/${id}/`)
             .then((res) => {
                 if (res.status === 204) alert("Note deleted!");
                 else alert("Failed to delete note.");
@@ -38,13 +33,12 @@ function Home() {
 
     const createNote = (e) => {
         e.preventDefault();
-        api
-            .post("/api/notes/", { title, content })
+        api.post('/api/notes/', { title, content })
             .then((res) => {
                 if (res.status === 201) {
                     alert("Note created!");
-                    setTitle("");
-                    setContent("");
+                    setTitle('');
+                    setContent('');
                     getNotes();
                 } else {
                     alert("Failed to create note.");
@@ -55,12 +49,15 @@ function Home() {
 
     const searchMovie = (e) => {
         e.preventDefault();
-        api
-            .post("/api/movie-search/", { movie_name: movieName })
+        api.post('/api/movie-search/', { movie_name: movieName })
             .then((res) => {
                 setMovieResults(res.data);
             })
             .catch((error) => alert(error));
+    };
+
+    const handleMovieClick = (movieId) => {
+        navigate(`/recommendations/${movieId}`);
     };
 
     return (
@@ -84,7 +81,11 @@ function Home() {
             </form>
             <div className="notes">
                 {notes.map((note) => (
-                    <Note key={note.id} note={note} deleteNote={deleteNote} />
+                    <div key={note.id}>
+                        <h2>{note.title}</h2>
+                        <p>{note.content}</p>
+                        <button onClick={() => deleteNote(note.id)}>Delete</button>
+                    </div>
                 ))}
             </div>
             <h1>Movie Search</h1>
@@ -99,21 +100,21 @@ function Home() {
                 <button type="submit">Search</button>
             </form>
             {movieResults && (
-             <div>
-             <h2>Search Results:</h2>
-             <div className="movie-results">
-                 {movieResults.results.map((movie) => (
-                     <div key={movie.id} className="movie">
-                         <img
-                             src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
-                             alt={movie.title}
-                         />
-                         <p>{movie.title}</p>
-                     </div>
-                 ))}
-             </div>
-         </div>
-     )}
+                <div>
+                    <h2>Search Results:</h2>
+                    <div className="movie-results">
+                        {movieResults.results.map((movie) => (
+                            <div key={movie.id} className="movie" onClick={() => handleMovieClick(movie.id)}>
+                                <img
+                                    src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
+                                    alt={movie.title}
+                                />
+                                <p>{movie.title}</p>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

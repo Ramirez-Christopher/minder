@@ -6,7 +6,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Note
 import requests
-from django.conf import settings
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 
 # Create your views here.
@@ -45,7 +49,10 @@ class MovieSearch(APIView):
         if not movie_name:
             return Response({"error": "Movie name is required"}, status=400)
 
-        api_key = "48459210ce8dcc37577600fd258b058d" # Get the TMDB API key from settings
+        api_key = os.getenv("TMDB_API_KEY")  # Get the TMDB API key from environment variables
+        if not api_key:
+            return Response({"error": "API key is missing"}, status=500)
+
         url = f"https://api.themoviedb.org/3/search/movie?api_key={api_key}&query={movie_name}"
 
         response = requests.get(url)
@@ -54,4 +61,27 @@ class MovieSearch(APIView):
 
         data = response.json()
         return Response(data)  # Return the data to the frontend
+
+class RecommendationSearch(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        movie_id = request.data.get('movie_id')  # Get the movie ID from the request data
+        if not movie_id:
+            return Response({"error": "Movie ID is required"}, status=400)
+
+        api_key = os.getenv("TMDB_API_KEY")  # Get the TMDB API key from environment variables
+        if not api_key:
+            return Response({"error": "API key is missing"}, status=500)
+
+        url = f"https://api.themoviedb.org/3/movie/{movie_id}/recommendations?api_key={api_key}"
+
+        response = requests.get(url)
+        if response.status_code != 200:
+            return Response({"error": "Failed to fetch data from TMDB"}, status=response.status_code)
+
+        data = response.json()
+        return Response(data)  # Return the data to the frontend
+
+
 
